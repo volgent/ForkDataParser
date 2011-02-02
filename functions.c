@@ -28,7 +28,7 @@ int getMessage(int write_fd)
 	sa.sa_handler = sigTermHandler;		/*Setting handler function*/
 	sigaction (SIGTERM, &sa, 0);		/*Setting SIGTERM signal to hear*/
 	
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < 5; i++)
 	{
 		dat1.symb = i + 39;
 		dat1.val = i;

@@ -14,6 +14,13 @@ struct Data			/*TODO: extern structure declaration*/
 	int val;
 };
 
+int IsTestPackage;
+
+void testPackage()
+{
+	IsTestPackage = 1;
+}
+
 int main(int argc, char **argv)
 {
 	pid_t child_pid;
@@ -23,6 +30,9 @@ int main(int argc, char **argv)
 	struct Data dat2;
 	struct timeval tv;
 	fd_set rfds;
+	
+	/*Sintatic sugar*/
+	IsTestPackage = 1;
 	
 	rv = pipe(pipe_ids);
 	if (rv != 0)	
@@ -49,10 +59,10 @@ int main(int argc, char **argv)
 	FD_ZERO (&rfds);			/*Will watch pipe for new data*/
 	FD_SET(pipe_ids[0], &rfds);
 	
-	tv.tv_sec = 2;				/*Wait for 1 second*/
+	tv.tv_sec = 5;				/*Wait for 5 second or some strange behavior*/
 	tv.tv_usec = 0;
 	
-	for (i = 0; i < 5; i ++)
+	for (i = 0; i < 10; i ++)
 	{
 		rv = select(pipe_ids[0] + 1, &rfds, NULL, NULL, &tv);
 		if (rv < 0)
@@ -60,10 +70,14 @@ int main(int argc, char **argv)
 			perror ("Error during select");
 			return EXIT_FAILURE;
 		}
-		if (rv == 0)	/*Timeout*/
+		if (IsTestPackage)
 		{
-			continue;
-		}	
+			if (rv == 0)	/*Timeout*/
+			{
+				printf ("Test package failed.\n");
+				break;
+			}
+		}			
 		rv = read (pipe_ids[0], &dat2, sizeof (dat2));
 		if (rv == sizeof (dat2))
 		{
