@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/select.h>
+#include <signal.h>
 
 extern int getMessage (int write_fd);
 
@@ -42,29 +44,33 @@ int main(int argc, char **argv)
 			perror ("Error during getMessage");
 		}
 		printf ("Child process: now exiting.\n");
-		exit (EXIT_SUCCESS);
 	}
 	
 	FD_ZERO (&rfds);			/*Will watch pipe for new data*/
 	FD_SET(pipe_ids[0], &rfds);
 	
-	tv.tv_sec = 1;				/*Wait for 1 second*/
+	tv.tv_sec = 2;				/*Wait for 1 second*/
 	tv.tv_usec = 0;
 	
-	for (i = 0; i < 10; i ++)
+	for (i = 0; i < 5; i ++)
 	{
-		rv = select(pipe_ids[0], &rfds, NULL, NULL, &tv);
+		rv = select(pipe_ids[0] + 1, &rfds, NULL, NULL, &tv);
 		if (rv < 0)
 		{
 			perror ("Error during select");
 			return EXIT_FAILURE;
 		}
+		if (rv == 0)	/*Timeout*/
+		{
+			continue;
+		}	
 		rv = read (pipe_ids[0], &dat2, sizeof (dat2));
 		if (rv == sizeof (dat2))
 		{
 			printf ("Got data: %c -> %d.\n", dat2.symb, dat2.val);
 		}
 	}
+	kill(child_pid, SIGTERM);	/*Sending termination signal to the child process*/
 	close (pipe_ids[0]);
 	printf ("Parent process: now exiting.\n");
 	return EXIT_SUCCESS;
